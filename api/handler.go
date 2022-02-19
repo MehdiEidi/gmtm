@@ -23,8 +23,6 @@ const (
 
 var telegramAPI string = TELEGRAM_API_BASE_URL + os.Getenv(BOT_TOKEN_ENV) + TELEGRAM_API_SEND_MESSAGE
 
-var movies string
-
 // Update is a Telegram object that we receive every time a user interacts with the bot.
 type Update struct {
 	UpdateId int     `json:"update_id"`
@@ -116,6 +114,7 @@ func parseIncomingRequest(r *http.Request) (*Update, error) {
 
 // sendToClient sends a text message to the Telegram chat identified by the chat ID.
 func sendToClient(chatID int, incomingText string) {
+	var movies string
 	switch incomingText {
 	case "/start":
 		text := "Hey dude!\nGive me some keywords (comma delimited) to recommend you movies :D"
@@ -130,7 +129,7 @@ func sendToClient(chatID int, incomingText string) {
 		incomingText = strings.ReplaceAll(incomingText, " ", "")
 		keywords := strings.Split(incomingText, ",")
 
-		getMovies(keywords)
+		movies = getMovies(keywords)
 	}
 
 	response, _ := http.PostForm(telegramAPI, url.Values{
@@ -140,7 +139,7 @@ func sendToClient(chatID int, incomingText string) {
 	response.Body.Close()
 }
 
-func getMovies(keywords []string) {
+func getMovies(keywords []string) string {
 	URL := IMDB_URL + keywords[0]
 
 	for i := 1; i < len(keywords); i++ {
@@ -149,9 +148,13 @@ func getMovies(keywords []string) {
 
 	c := colly.NewCollector()
 
+	var movies string
+
 	c.OnHTML(`h3[class="lister-item-header"]`, func(element *colly.HTMLElement) {
 		movies += strings.TrimSpace(element.DOM.Children().Text()) + "\n"
 	})
 
 	c.Visit(URL)
+
+	return movies
 }
