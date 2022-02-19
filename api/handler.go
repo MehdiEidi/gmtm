@@ -124,6 +124,13 @@ func sendToClient(chatID int, incomingText string) {
 		})
 		defer response.Body.Close()
 
+	case "/cmd1":
+		response, _ := http.PostForm(telegramAPI, url.Values{
+			"chat_id": {strconv.Itoa(chatID)},
+			"text":    {"cmd2"},
+		})
+		defer response.Body.Close()
+
 	default:
 		incomingText = strings.ReplaceAll(incomingText, " ", "")
 		keywords := strings.Split(incomingText, ",")
