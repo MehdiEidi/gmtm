@@ -137,6 +137,7 @@ func sendToClient(chatID int, incomingText string) {
 		"text":    {movies},
 	})
 	response.Body.Close()
+	movies = ""
 }
 
 func getMovies(keywords []string) string {
