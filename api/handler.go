@@ -114,7 +114,6 @@ func parseIncomingRequest(r *http.Request) (*Update, error) {
 
 // sendToClient sends a text message to the Telegram chat identified by the chat ID.
 func sendToClient(chatID int, incomingText string) {
-	var movies string
 	switch incomingText {
 	case "/start":
 		text := "Hey dude!\nGive me some keywords (comma delimited) to recommend you movies :D"
@@ -129,15 +128,15 @@ func sendToClient(chatID int, incomingText string) {
 		incomingText = strings.ReplaceAll(incomingText, " ", "")
 		keywords := strings.Split(incomingText, ",")
 
-		movies = getMovies(keywords)
+		movies := getMovies(keywords)
+
+		response, _ := http.PostForm(telegramAPI, url.Values{
+			"chat_id": {strconv.Itoa(chatID)},
+			"text":    {movies},
+		})
+		defer response.Body.Close()
 	}
 
-	response, _ := http.PostForm(telegramAPI, url.Values{
-		"chat_id": {strconv.Itoa(chatID)},
-		"text":    {movies},
-	})
-	response.Body.Close()
-	movies = ""
 }
 
 func getMovies(keywords []string) string {
