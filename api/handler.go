@@ -123,7 +123,7 @@ func sendToClient(chatID int, incomingText string) (string, error) {
 	sendValues := url.Values{"chat_id": {strconv.Itoa(chatID)}}
 
 	switch incomingText {
-	case "/start":
+	case "start":
 		text := "Hey dude!\nGive me some keywords (comma delimited) to recommend you movies :D"
 		sendValues.Add("text", text)
 
@@ -171,6 +171,7 @@ func getMovies(keywords []string) string {
 	return movies
 }
 
+// getKeywords parses incoming text and returns keywords
 func getKeywords(incomingText string) []string {
 	incomingText = strings.ReplaceAll(incomingText, " ", "")
 	return strings.Split(incomingText, ",")
