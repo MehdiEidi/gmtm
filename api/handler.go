@@ -92,7 +92,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	telegramResponseBody, err := sendToClient(update.Message.Chat.ID, strings.ToLower(update.Message.Text))
+	telegramResponseBody, err := sendToClient(update.Message.Chat.ID, update.Message.Text)
 	if err != nil {
 		log.Printf("got error %s from telegram, response body is %s", err.Error(), telegramResponseBody)
 		return
