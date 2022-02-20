@@ -120,32 +120,10 @@ func parseIncomingRequest(r *http.Request) (*Update, error) {
 
 // sendToClient sends a text message to the Telegram chat identified by the chat ID.
 func sendToClient(chatID int, incomingText string) (string, error) {
-	if incomingText == "/start" {
-		response, err := http.PostForm(telegramAPI, url.Values{
-			"chat_id": {strconv.Itoa(chatID)},
-			"text":    {"Hey dude!\nGive me some keywords (comma delimited) to recommend you movies :D"},
-		})
-		if err != nil {
-			log.Printf("error when posting text to the chat: %s", err.Error())
-			return "", err
-		}
-		defer response.Body.Close()
-
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			log.Printf("error in parsing telegram response %s", err.Error())
-			return "", err
-		}
-
-		log.Printf("body of the telegram response: %s", string(body))
-
-		return string(body), nil
-	}
-
 	sendValues := url.Values{"chat_id": {strconv.Itoa(chatID)}}
 
 	switch incomingText {
-	case "start":
+	case "/start":
 		text := "Hey dude!\nGive me some keywords (comma delimited) to recommend you movies :D"
 		sendValues.Add("text", text)
 
