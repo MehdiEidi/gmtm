@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -92,7 +93,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendToClient(update.Message.Chat.ID, strings.ToLower(update.Message.Text))
+	telegramResponseBody, err := sendToClient(update.Message.Chat.ID, strings.ToLower(update.Message.Text))
+	if err != nil {
+		log.Printf("got error %s from telegram, response body is %s", err.Error(), telegramResponseBody)
+	} else {
+		log.Printf("successfully distributed to chat id %d", update.Message.Chat.ID)
+	}
 }
 
 // parseIncomingRequest parses incoming update to Update.
@@ -113,23 +119,34 @@ func parseIncomingRequest(r *http.Request) (*Update, error) {
 }
 
 // sendToClient sends a text message to the Telegram chat identified by the chat ID.
-func sendToClient(chatID int, incomingText string) {
+func sendToClient(chatID int, incomingText string) (string, error) {
+	if incomingText == "/start" {
+		return "", nil
+	}
+
 	switch incomingText {
 	case "/start":
 		text := "Hey dude!\nGive me some keywords (comma delimited) to recommend you movies :D"
 
-		response, _ := http.PostForm(telegramAPI, url.Values{
+		response, err := http.PostForm(telegramAPI, url.Values{
 			"chat_id": {strconv.Itoa(chatID)},
 			"text":    {text},
 		})
+		if err != nil {
+			log.Printf("error when posting text to the chat: %s", err.Error())
+			return "", err
+		}
 		defer response.Body.Close()
 
-	case "/cmd1":
-		response, _ := http.PostForm(telegramAPI, url.Values{
-			"chat_id": {strconv.Itoa(chatID)},
-			"text":    {"cmd2"},
-		})
-		defer response.Body.Close()
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Printf("error in parsing telegram answer %s", err.Error())
+			return "", err
+		}
+
+		log.Printf("Body of Telegram Response: %s", string(body))
+
+		return string(body), nil
 
 	default:
 		incomingText = strings.ReplaceAll(incomingText, " ", "")
@@ -137,13 +154,26 @@ func sendToClient(chatID int, incomingText string) {
 
 		movies := getMovies(keywords)
 
-		response, _ := http.PostForm(telegramAPI, url.Values{
+		response, err := http.PostForm(telegramAPI, url.Values{
 			"chat_id": {strconv.Itoa(chatID)},
 			"text":    {movies},
 		})
+		if err != nil {
+			log.Printf("error when posting text to the chat: %s", err.Error())
+			return "", err
+		}
 		defer response.Body.Close()
-	}
 
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Printf("error in parsing telegram answer %s", err.Error())
+			return "", err
+		}
+
+		log.Printf("Body of Telegram Response: %s", string(body))
+
+		return string(body), nil
+	}
 }
 
 func getMovies(keywords []string) string {
